@@ -13,6 +13,8 @@ pub struct HourlyData {
     pub temperature_2m: Vec<f64>,
 }
 
+pub type WeatherData = WeatherApiResponse;
+
 pub async fn fetch_weather_data(client: &Client, lat: f64, lon: f64) -> Result<WeatherApiResponse> {
     let url = format!(
         "https://api.open-meteo.com/v1/forecast?latitude={}&longitude={}&hourly=temperature_2m&past_days=1",

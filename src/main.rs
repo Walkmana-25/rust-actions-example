@@ -26,16 +26,23 @@ async fn main() -> Result<()> {
     let now = Local::now().date_naive();
     let yesterday = now - Duration::days(1);
 
+    let (today_temps, yesterday_temps) = extract_temperatures(&weather_data, now, yesterday);
+
+    println!("\n--- Hourly Weather Data (Every 6 Hours) ---");
+    print_hourly_weather(&weather_data, now, yesterday);
+
+    println!("\n--- Average Temperatures ---");
+    print_average_temperature("Today's", &today_temps);
+    print_average_temperature("Yesterday's", &yesterday_temps);
+
+    Ok(())
+}
+
+fn extract_temperatures(weather_data: &weather::WeatherData, now: NaiveDate, yesterday: NaiveDate) -> (Vec<f64>, Vec<f64>) {
     let mut today_temps = Vec::new();
     let mut yesterday_temps = Vec::new();
 
-    if weather_data.hourly.time.len() != weather_data.hourly.temperature_2m.len() {
-        anyhow::bail!("API response has mismatched time and temperature data lengths.");
-    }
-
-    // Populate today's and yesterday's temperatures for average calculation
     for (i, time_str) in weather_data.hourly.time.iter().enumerate() {
-        // Only parse the date part for average calculation logic
         if let Ok(date) = NaiveDate::parse_from_str(&time_str[0..10], "%Y-%m-%d") {
             if date == now {
                 today_temps.push(weather_data.hourly.temperature_2m[i]);
@@ -43,7 +50,6 @@ async fn main() -> Result<()> {
                 yesterday_temps.push(weather_data.hourly.temperature_2m[i]);
             }
         } else {
-            // Keep the warning for the date parsing specific to average calculation
             eprintln!(
                 "Warning: Could not parse date for average calculation from timestamp: {}",
                 time_str
@@ -51,8 +57,10 @@ async fn main() -> Result<()> {
         }
     }
 
-    println!("\n--- Hourly Weather Data (Every 6 Hours) ---");
-    // Print hourly data for yesterday and today only, every 6 hours
+    (today_temps, yesterday_temps)
+}
+
+fn print_hourly_weather(weather_data: &weather::WeatherData, now: NaiveDate, yesterday: NaiveDate) {
     for (i, (time_str, temp)) in weather_data
         .hourly
         .time
@@ -60,14 +68,11 @@ async fn main() -> Result<()> {
         .zip(weather_data.hourly.temperature_2m.iter())
         .enumerate()
     {
-        // Only process every 6th hour
         if i % 6 != 0 {
             continue;
         }
 
-        // Attempt to parse the full datetime string for hourly display
         if let Ok(naive_datetime) = chrono::NaiveDateTime::parse_from_str(time_str, "%Y-%m-%dT%H:%M") {
-            // Assume local timezone if parsing NaiveDateTime succeeds
             match Local.from_local_datetime(&naive_datetime) {
                 chrono::LocalResult::Single(local_datetime) => {
                     let date = local_datetime.date_naive();
@@ -90,14 +95,12 @@ async fn main() -> Result<()> {
                 }
             }
         } else if let Ok(datetime) = chrono::DateTime::parse_from_rfc3339(&(time_str.replace("Z", "+00:00"))) {
-            // Fallback to RFC3339 parsing if NaiveDateTime fails
             let date = datetime.date_naive();
             if date == now || date == yesterday {
                 let display_time = datetime.with_timezone(&Local).format("%Y-%m-%d %H:%M");
                 println!("{}: {:.1}°C", display_time, temp);
             }
         } else {
-            // If all parsing fails, print a warning but only for yesterday and today
             if let Ok(date) = NaiveDate::parse_from_str(&time_str[0..10], "%Y-%m-%d") {
                 if date == now || date == yesterday {
                     eprintln!(
@@ -109,18 +112,11 @@ async fn main() -> Result<()> {
             }
         }
     }
+}
 
-    println!("\n--- Average Temperatures ---"); // Changed header for clarity
-
-    match calculate_average(&today_temps) {
-        Some(avg) => println!("Today's average temperature: {:.2}°C", avg),
-        None => println!("Could not calculate today's average temperature (no data)."),
+fn print_average_temperature(label: &str, temperatures: &[f64]) {
+    match calculate_average(temperatures) {
+        Some(avg) => println!("{} average temperature: {:.2}°C", label, avg),
+        None => println!("Could not calculate {} average temperature (no data).", label),
     }
-
-    match calculate_average(&yesterday_temps) {
-        Some(avg) => println!("Yesterday's average temperature: {:.2}°C", avg),
-        None => println!("Could not calculate yesterday's average temperature (no data)."),
-    }
-
-    Ok(())
 }
