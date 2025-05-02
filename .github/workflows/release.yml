@@ -8,6 +8,9 @@ on:
     tags:
       - v*
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   Test:
     uses: ./.github/workflows/testing.yml
@@ -16,7 +19,7 @@ jobs:
     needs: [Test]
     runs-on: ${{ matrix.runner }}
     env:
-      PROJECT_NAME: fctrl
+      PROJECT_NAME: rust-actions-example
     strategy:
       fail-fast: false
       matrix:
