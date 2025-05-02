@@ -64,25 +64,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Dependencies
+      - name: Install Dependencies on Windows
+        if: ${{ matrix.runner == 'windows-latest' }}
         run: |
-          if [[ "${{ matrix.runner }}" == "windows-latest" ]]; then
             choco install make --yes
-          elif [[ "${{ matrix.runner }}" == "macos-latest" ]]; then
+      - name: Install Dependencies on MacOS
+        if: ${{ matrix.runner == 'macos-latest' }}
+        run: |
             brew install make
-          fi
 
       - name: Install cross (if needed)
         if: ${{ matrix.cross }}
         run: cargo install cross --git https://github.com/cross-rs/cross
 
+      - name: Build Project on cross
+        if: ${{ matrix.cross }}
+        run: |
+            cross build --release --target ${{ matrix.target }} --verbose
       - name: Build Project
         run: |
-          if ${{ matrix.cross }}; then
-            cross build --release --target ${{ matrix.target }} --verbose
-          else
-            rustup target add ${{ matrix.target }}
-            cargo build --release --target ${{ matrix.target }} --verbose
+          rustup target add ${{ matrix.target }}
+          cargo build --release --target ${{ matrix.target }} --verbose
 
       - name: Rename Artifacts
         shell: bash
