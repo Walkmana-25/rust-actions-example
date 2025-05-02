@@ -39,12 +39,16 @@ mod tests {
         assert!((avg - 0.0).abs() < f64::EPSILON);
     }
 
-     #[test]
+    #[test]
     fn test_calculate_average_floating_point() {
         let data = [10.5, 11.5, 12.5];
-         // Use assert! with a tolerance for floating-point comparisons
+        // Use assert! with a tolerance for floating-point comparisons
         let avg = calculate_average(&data).unwrap();
-        assert!((avg - 11.5).abs() < f64::EPSILON, "Expected average to be close to 11.5, but got {}", avg);
+        assert!(
+            (avg - 11.5).abs() < f64::EPSILON,
+            "Expected average to be close to 11.5, but got {}",
+            avg
+        );
     }
 
     // Optional: Add a test for a larger dataset if needed
@@ -52,6 +56,10 @@ mod tests {
     fn test_calculate_average_larger_set() {
         let data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
         let avg = calculate_average(&data).unwrap();
-        assert!((avg - 5.5).abs() < f64::EPSILON, "Expected average to be close to 5.5, but got {}", avg);
+        assert!(
+            (avg - 5.5).abs() < f64::EPSILON,
+            "Expected average to be close to 5.5, but got {}",
+            avg
+        );
     }
 }

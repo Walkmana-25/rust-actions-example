@@ -21,15 +21,23 @@ pub async fn fetch_weather_data(client: &Client, lat: f64, lon: f64) -> Result<W
         lat, lon
     );
 
-    let response = client.get(&url)
+    let response = client
+        .get(&url)
         .send()
         .await
         .context("Failed to send request to Open-Meteo API")?;
 
     if !response.status().is_success() {
         let status = response.status();
-        let text = response.text().await.unwrap_or_else(|_| "Could not read error body".to_string());
-        anyhow::bail!("Open-Meteo API request failed with status: {}. Body: {}", status, text);
+        let text = response
+            .text()
+            .await
+            .unwrap_or_else(|_| "Could not read error body".to_string());
+        anyhow::bail!(
+            "Open-Meteo API request failed with status: {}. Body: {}",
+            status,
+            text
+        );
     }
 
     let weather_data = response

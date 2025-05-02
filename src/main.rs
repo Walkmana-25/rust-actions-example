@@ -38,7 +38,11 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-fn extract_temperatures(weather_data: &weather::WeatherData, now: NaiveDate, yesterday: NaiveDate) -> (Vec<f64>, Vec<f64>) {
+fn extract_temperatures(
+    weather_data: &weather::WeatherData,
+    now: NaiveDate,
+    yesterday: NaiveDate,
+) -> (Vec<f64>, Vec<f64>) {
     let mut today_temps = Vec::new();
     let mut yesterday_temps = Vec::new();
 
@@ -72,7 +76,9 @@ fn print_hourly_weather(weather_data: &weather::WeatherData, now: NaiveDate, yes
             continue;
         }
 
-        if let Ok(naive_datetime) = chrono::NaiveDateTime::parse_from_str(time_str, "%Y-%m-%dT%H:%M") {
+        if let Ok(naive_datetime) =
+            chrono::NaiveDateTime::parse_from_str(time_str, "%Y-%m-%dT%H:%M")
+        {
             match Local.from_local_datetime(&naive_datetime) {
                 chrono::LocalResult::Single(local_datetime) => {
                     let date = local_datetime.date_naive();
@@ -94,21 +100,21 @@ fn print_hourly_weather(weather_data: &weather::WeatherData, now: NaiveDate, yes
                     }
                 }
             }
-        } else if let Ok(datetime) = chrono::DateTime::parse_from_rfc3339(&(time_str.replace("Z", "+00:00"))) {
+        } else if let Ok(datetime) =
+            chrono::DateTime::parse_from_rfc3339(&(time_str.replace("Z", "+00:00")))
+        {
             let date = datetime.date_naive();
             if date == now || date == yesterday {
                 let display_time = datetime.with_timezone(&Local).format("%Y-%m-%d %H:%M");
                 println!("{}: {:.1}°C", display_time, temp);
             }
-        } else {
-            if let Ok(date) = NaiveDate::parse_from_str(&time_str[0..10], "%Y-%m-%d") {
-                if date == now || date == yesterday {
-                    eprintln!(
-                        "Warning: Could not parse timestamp for hourly display: {}",
-                        time_str
-                    );
-                    println!("{}: {:.1}°C", time_str, temp);
-                }
+        } else if let Ok(date) = NaiveDate::parse_from_str(&time_str[0..10], "%Y-%m-%d") {
+            if date == now || date == yesterday {
+                eprintln!(
+                    "Warning: Could not parse timestamp for hourly display: {}",
+                    time_str
+                );
+                println!("{}: {:.1}°C", time_str, temp);
             }
         }
     }
@@ -117,6 +123,9 @@ fn print_hourly_weather(weather_data: &weather::WeatherData, now: NaiveDate, yes
 fn print_average_temperature(label: &str, temperatures: &[f64]) {
     match calculate_average(temperatures) {
         Some(avg) => println!("{} average temperature: {:.2}°C", label, avg),
-        None => println!("Could not calculate {} average temperature (no data).", label),
+        None => println!(
+            "Could not calculate {} average temperature (no data).",
+            label
+        ),
     }
 }
